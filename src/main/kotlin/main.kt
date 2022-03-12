@@ -6,7 +6,11 @@ import java.net.ServerSocket
 val rootDir: String = System.getProperty("user.dir")
 
 fun main() = runBlocking {
-    val serverPort = 80
+    val inputStream: InputStream = File("$rootDir\\progjarx.conf").inputStream()
+//    val serverPort = 80
+    val config = mutableListOf<String>()
+    inputStream.bufferedReader().useLines { lines -> lines.forEach { config.add(it)} }
+    val serverPort = config[0].substringAfter(':').toInt()
     val server = ServerSocket(serverPort)
     println("Server is active, listening at port: $serverPort")
     while (true) {
