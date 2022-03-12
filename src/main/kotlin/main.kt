@@ -12,7 +12,6 @@ fun main() {
         val client = server.accept()
         val br = BufferedReader(InputStreamReader(client.getInputStream()))
         val bw = BufferedWriter(OutputStreamWriter(client.getOutputStream()))
-        bw.write("Server: type '/q' or 'exit' to exit.\r\n")
 
         while (true) {
             val header = getRequestHeader(br)
@@ -26,16 +25,16 @@ fun main() {
             println("= = = = = request from client = = = = =")
             print(header)
             println("= = = = = end of request = = = = =")
-            val dummy = "<p>hello mom!</p>"
+            val dummy = "<!doctype html><html><p>hello mom!</p></html>"
             var response = responseBuilder(
                 200,
                 "OK",
                 "OK",
-                "text/html",
+                "text/html; charset=UTF-8",
                 dummy.length.toLong()
             )
 
-            response += dummy +"\r\n"
+            response += dummy + "\r\n"
             println("= = = = = response from server = = = = =")
             print(response)
             println("= = = = = end of response = = = = =")
@@ -43,6 +42,8 @@ fun main() {
                 write(response)
                 flush()
             }
+//            client.close()
+//            break
         }
     }
 
@@ -96,6 +97,7 @@ fun responseBuilder(
     response += " $status\r\n"
     response += "Content-Type: $contentType\r\n"
     response += "Content-Length: $contentLength\r\n"
+    response += "Server: progjarx\r\n"
     response += "\r\n"
 
     return response
