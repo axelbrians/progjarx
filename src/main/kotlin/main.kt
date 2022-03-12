@@ -1,9 +1,10 @@
+import handler.FileHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.*
 import java.net.ServerSocket
 
-val rootDir = "${System.getProperty("user.dir")}\\src\\main\\kotlin"
+val rootDir: String = System.getProperty("user.dir")
 
 fun main() = runBlocking {
     val serverPort = 80
@@ -16,25 +17,36 @@ fun main() = runBlocking {
         val bw = BufferedWriter(OutputStreamWriter(client.getOutputStream()))
 
         val header = getRequestHeader(br)
-        val url = header.substringBefore("\n", "")
+        val firstRowResponses = header.substringBefore("\n", "").split(" ")
+        val url = firstRowResponses[1].removePrefix("/")
+        val file = File(rootDir, "\\$url")
 
-        val file = File(rootDir, "\\index.html")
+        println(file.path)
+        println(file.toPath())
+
+        if (file.exists() && file.isFile) {
+            val mimeType = FileHandler.getMimeType(file)
+            println("mimeType: $mimeType")
+        }
+
+
+
         println("= = = = = request from client = = = = =")
         print(header)
         println("= = = = = end of request = = = = =")
         val dummy = "<!doctype html><html><p>hello mom!</p></html>"
         var response = responseBuilder(
-            200,
-            "OK",
-            "OK",
-            "text/html; charset=UTF-8",
-            dummy.length.toLong()
+            code = 200,
+            status = "OK",
+            contentType = "text/html; charset=UTF-8",
+            contentLength = dummy.length.toLong(),
+            content = dummy
         )
 
         response += dummy + "\r\n"
-        println("= = = = = response from server = = = = =")
-        print(response)
-        println("= = = = = end of response = = = = =")
+//        println("= = = = = response from server = = = = =")
+//        print(response)
+//        println("= = = = = end of response = = = = =")
         with(bw) {
             write(response)
             flush()
@@ -63,8 +75,7 @@ fun getRequestHeader(br: BufferedReader): String {
 
 fun responseBuilder(
     code: Int,
-    status: String,
-    message: String
+    status: String
 ): String {
     var response = ""
 
@@ -79,9 +90,9 @@ fun responseBuilder(
 fun responseBuilder(
     code: Int,
     status: String,
-    message: String,
     contentType: String,
-    contentLength: Long
+    contentLength: Long,
+    content: Any? = ""
 ): String {
     var response = ""
 
@@ -92,6 +103,7 @@ fun responseBuilder(
     response += "Content-Length: $contentLength\r\n"
     response += "Server: progjarx\r\n"
     response += "\r\n"
+    response += content.toString()
 
     return response
 }
