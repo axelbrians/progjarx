@@ -1,10 +1,10 @@
-package handler
+package helper
 
 import java.io.File
 import java.lang.NullPointerException
 import java.nio.file.Files
 
-object FileHandler {
+object FileHelper {
 
     fun getMimeType(url: String): String {
         val file = File(url)

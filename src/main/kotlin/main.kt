@@ -1,7 +1,9 @@
-import handler.FileHandler
+import helper.FileHelper
 import kotlinx.coroutines.runBlocking
 import java.io.*
 import java.net.ServerSocket
+import java.text.SimpleDateFormat
+import java.util.*
 
 val rootDir: String = System.getProperty("user.dir")
 
@@ -9,7 +11,9 @@ fun main() = runBlocking {
     val inputStream: InputStream = File("$rootDir\\progjarx.conf").inputStream()
 //    val serverPort = 80
     val config = mutableListOf<String>()
-    inputStream.bufferedReader().useLines { lines -> lines.forEach { config.add(it)} }
+    inputStream.bufferedReader().useLines { line ->
+        line.forEach { config.add(it)}
+    }
     val serverPort = config[0].substringAfter(':').toInt()
     val server = ServerSocket(serverPort)
     println("Server is active, listening at port: $serverPort")
@@ -25,63 +29,91 @@ fun main() = runBlocking {
         val url = firstRowResponses[1].removePrefix("/")
         val file = File(rootDir, "\\$url")
 
-        if (file.exists() && file.isFile) {
-            val mimeType = FileHandler.getMimeType(file)
-            println("mimeType: $mimeType")
-            val responseHeader = responseHeaderBuilder(
+        println("= = = = = request from client = = = = =")
+        print(header)
+        println("= = = = = end of request = = = = =")
+
+        val responseHeader: String
+        val mimeType: String
+        when {
+            file.exists() && file.isFile -> {
+                mimeType = FileHelper.getMimeType(file)
+                responseHeader = responseHeaderBuilder(
                     code = 200,
                     status = "OK",
                     contentType = mimeType,
                     contentLength = file.length(),
                 )
-
-            println("= = = = = response from server = = = = =")
-            print(responseHeader)
-            println("= = = = = end of response = = = = =")
-
-            with(bw) {
-                write(responseHeader)
-                flush()
-            }
-
-            file.inputStream().use {
-                val byteArray = ByteArray(1024 * 8)
-                var read = it.read(byteArray)
-                while (true) {
-                    bos.write(byteArray, 0, read)
-                    read = it.read(byteArray)
-                    if (read < 0) {
-                        break
-                    }
+                val sdf = SimpleDateFormat("hh:mm dd/MM/yyyy")
+                val calendar = Calendar.getInstance().also {
+                    it.timeInMillis = file.lastModified()
                 }
-                bos.flush()
+                val lastModified = sdf.format(calendar.time)
+
+
+                println("fileName ${file.name}")
+                println("size ${file.length()}")
+                println("lastModified $lastModified")
+
+
+                with(bw) {
+                    write(responseHeader)
+                    flush()
+                }
+                file.inputStream().use {
+                    val byteArray = ByteArray(1024 * 8)
+                    var read = it.read(byteArray)
+                    while (true) {
+                        bos.write(byteArray, 0, read)
+                        read = it.read(byteArray)
+                        if (read < 0) {
+                            break
+                        }
+                    }
+                    bos.flush()
+                }
             }
-        } else {
-            val dummy = "<!doctype html><html><p>hello mom!</p></html>"
-            var response = responseHeaderBuilder(
-                code = 200,
-                status = "OK",
-                contentType = "text/html; charset=UTF-8",
-                contentLength = dummy.length.toLong(),
-            )
-
-            println("= = = = = response from server = = = = =")
-            print(response)
-            println("= = = = = end of response = = = = =")
-
-            response += dummy + "\r\n"
-            with(bw) {
-                write(response)
-                flush()
+            file.exists() && file.isDirectory -> {
+                val content = "<!doctype html><html><h1>listing directories WIP</h1></html>\n"
+                mimeType = "text/html; charset=UTF-8"
+                responseHeader = responseHeaderBuilder(
+                    code = 200,
+                    status = "OK",
+                    contentType = mimeType,
+                    contentLength = content.length.toLong(),
+                )
+                with(bw) {
+                    write(responseHeader)
+                    flush()
+                }
+                with(bos) {
+                    write(content.toByteArray(), 0, content.length)
+                    flush()
+                }
+            }
+            else -> {
+                val content = "<!doctype html><html><p>hello mom!</p></html>\r\n"
+                mimeType = "text/html; charset=UTF-8"
+                responseHeader = responseHeaderBuilder(
+                    code = 200,
+                    status = "OK",
+                    contentType = mimeType,
+                    contentLength = content.length.toLong(),
+                )
+                with(bw) {
+                    write(responseHeader)
+                    flush()
+                }
+                with(bos) {
+                    write(content.toByteArray(), 0, content.length)
+                    flush()
+                }
             }
         }
 
-        println("= = = = = request from client = = = = =")
-        print(header)
-        println("= = = = = end of request = = = = =")
-
-
-
+        println("= = = = = header from server = = = = =")
+        print(responseHeader)
+        println("= = = = = end of header = = = = =")
     }
 
 }
