@@ -39,9 +39,11 @@ object HtmlHelper {
 
     fun generateListingHtml(parent: File, fileDataList: List<FileData>): String {
         val workingDir = getWorkingDirectory(parent)
-        val headTitle = HEAD_TITLE.format(workingDir)
+        var headTitle = HEAD_TITLE.format(workingDir)
         val bodyTitle = H1_TAG.format(workingDir)
         var bodyTableContent = ""
+
+        headTitle += "<link rel=\"icon\" href=\"http://progjarx.com/assets/progjarx-logo.ico\">"
 
         bodyTableContent += createTrTitle()
         bodyTableContent += createTrBorder()
@@ -60,12 +62,12 @@ object HtmlHelper {
         trContent += if (file.isDirectory) {
             TD_TAG.format(
                 "valign=\"top\"",
-                IMG_TAG.format("src=\"/assets/folder.gif\" alt=\"[ICO]\"")
+                IMG_TAG.format("src=\"http://progjarx.com/assets/folder.gif\" alt=\"[ICO]\"")
             )
         } else {
             TD_TAG.format(
                 "valign=\"top\"",
-                IMG_TAG.format("src=\"/assets/unknown.gif\" alt=\"[ICO]\"")
+                IMG_TAG.format("src=\"http://progjarx.com/assets/unknown.gif\" alt=\"[ICO]\"")
             )
         }
 
@@ -108,7 +110,7 @@ object HtmlHelper {
 
         trContent += TH_TAG.format(
             "valign=\"top\"",
-            IMG_TAG.format("alt=\"[ICO]\"")
+            IMG_TAG.format("height=\"24px\" src=\"http://progjarx.com/assets/progjarx-logo.ico\" alt=\"[ICO]\"")
         )
 
         trContent += TH_TAG.format(
