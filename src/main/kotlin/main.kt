@@ -1,31 +1,57 @@
 import helper.FileHelper
 import helper.HtmlHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.*
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.text.SimpleDateFormat
 import java.util.*
 
-val rootDir: String = System.getProperty("user.dir")
+var staticRootDir: String = System.getProperty("user.dir")
+var rootDir: String = staticRootDir
+var host:String? = ""
+val ttl = 100
+val timeout = 15
+var keepAlive = false
+
 
 fun main() = runBlocking {
     val inputStream: InputStream = File("$rootDir\\progjarx.conf").inputStream()
 //    val serverPort = 80
+
     val config = mutableListOf<String>()
     inputStream.bufferedReader().useLines { line ->
         line.forEach { config.add(it)}
     }
+
+    val serverIP = config[0].substringBefore(':')
     val serverPort = config[0].substringAfter(':').toInt()
-    val server = ServerSocket(serverPort)
+    val server = ServerSocket(serverPort, 5, InetAddress.getByName(serverIP))
     println("Server is active, listening at port: $serverPort")
     while (true) {
         println("= = = = = Waiting for next client to connect = = = = =")
         val client = server.accept()
+        keepAlive = false
+
         val br = BufferedReader(InputStreamReader(client.getInputStream()))
         val bw = BufferedWriter(OutputStreamWriter(client.getOutputStream()))
         val bos = BufferedOutputStream(client.getOutputStream())
 
         val header = getRequestHeader(br)
+
+        rootDir = staticRootDir
+
+        var path: String
+        for (i in 1 until config.size) {
+//            println("config row: " + config[i] + " host = " + config[i].substringBefore(':') + "HOST = " + host)
+            if(config[i].substringBefore(':') == host) {
+                path = config[i].substringAfter(":./")
+                rootDir += "\\$path"
+                break
+            }
+        }
+
         val firstRowResponses = header.substringBefore("\n", "").split(" ")
         println(firstRowResponses)
         if (firstRowResponses.size < 3) {
@@ -94,7 +120,7 @@ fun main() = runBlocking {
                         status = "OK",
                         contentType = mimeType,
                         contentLength = content.length.toLong(),
-                        location = "$url/${indexFileData.name}"
+//                        location = "$url/${indexFileData.name}"
                     )
                 } else {
                     content = HtmlHelper.generateListingHtml(file, fileDataList)
@@ -134,6 +160,7 @@ fun main() = runBlocking {
                 }
             }
         }
+        if(keepAlive) delay(3000)
         client.close()
 
 //        println("= = = = = header from server = = = = =")
@@ -151,7 +178,13 @@ fun getRequestHeader(br: BufferedReader): String {
 
     while (true) {
         val message: String? = br.readLine()
-//        println(message)
+        println(message)
+        if(message != null && message.contains("Host")) {
+            host = message.substringAfter(' ')
+        }
+        if(message != null && message.contains("keep-alive")) {
+            keepAlive = true
+        }
         if (message == null || message == "\r\n" || message.isBlank()) {
             break
         }
@@ -201,6 +234,10 @@ fun responseHeaderBuilder(
 
     response += "Content-Type: $contentType\r\n"
     response += "Content-Length: $contentLength\r\n"
+    if(keepAlive) {
+        response += "Keep-Alive: timeout=$timeout, max=$ttl\r\n"
+        response +="Connection: Keep-Alive\r\n"
+    }
     response += "Server: progjarx/v2.0\r\n"
     response += "\r\n"
 
