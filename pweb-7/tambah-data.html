@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="css/style.css" rel="stylesheet" media="all">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <title>Tambah Data dengan jQuery</title>
+</head>
+<body>
+    <div class="page-wrapper bg-gradient">
+        <div class="wrapper">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row row-space">
+                        <h2 class="title">Tambah Barang Baru</h2>
+                        <div class="col-2">
+                            <button class="btn-purple" onclick="window.location.href='../'">Kembali</button>
+                        </div>
+                    </div>
+                    
+                    <form autocomplete="off">
+                        <div class="input-group">
+                            <label class="label">Nama Barang</label>
+                            <input class="input-style" type="text" name="titleBook" id="titleBook">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="label">Daftar Barang</label>
+                            <div class="select-wrapper">
+                                <select name="listBook" id="listBook" class="select-style">
+                                    <option selected="selected" disabled="disabled" value="">Pilih</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-t-15">
+                            <input class="btn-green" id="btnAdd" type="button" value="Tambah">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#btnAdd').click(function () {
+                var newBook = $('#titleBook').val();
+                
+                if (newBook == "") {
+                    return;
+                }
+
+                else {
+                    $('#listBook').append(new Option(newBook, newBook));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

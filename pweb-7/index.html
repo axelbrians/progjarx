@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <title>jKweri</title>
+    <style>
+        body {
+            font-family: 'Poppins';
+            text-align: center;
+            justify-content: center;
+            background-image: url('gdsc_bg.png');
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: black;
+            font-weight: bold;
+        }
+
+        .btn-info {
+            background: #c8f377;
+            color: black;
+        }
+        
+        .btn-info:hover {
+            background: #42d756;
+            color: black;
+        }
+        
+        .container {
+            top: 50%;
+            left: 50%;
+            position: absolute;
+            -moz-transform: translateX(-50%) translateY(-50%);
+            -webkit-transform: translateX(-50%) translateY(-50%);
+            transform: translateX(-50%) translateY(-50%);
+
+            -webkit-animation: fadein 1.5s;
+            -moz-animation: fadein 1.5s;
+            animation: fadein 1.5s;
+        }
+
+        @keyframes fadein {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        @-moz-keyframes fadein {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Web-app with simple jQuery</h1>
+        
+        <center>
+            <button class="btn btn-info" onclick="window.location.href='./tambah-data.html'">Tambah Data</button>
+            <button class="btn btn-info" onclick="window.location.href='./validasi-form.html'">Validasi Form</button>
+        </center>
+    </div>
+</body>
+</html>

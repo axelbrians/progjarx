@@ -1,4 +1,5 @@
 import helper.FileHelper
+import helper.HtmlHelper
 import kotlinx.coroutines.runBlocking
 import java.io.*
 import java.net.ServerSocket
@@ -26,35 +27,33 @@ fun main() = runBlocking {
 
         val header = getRequestHeader(br)
         val firstRowResponses = header.substringBefore("\n", "").split(" ")
+        println(firstRowResponses)
+        if (firstRowResponses.size < 3) {
+            client.close()
+            continue
+        }
+
         val url = firstRowResponses[1].removePrefix("/")
         val file = File(rootDir, "\\$url")
+        println(file.absolutePath)
 
-        println("= = = = = request from client = = = = =")
-        print(header)
-        println("= = = = = end of request = = = = =")
+//        println("= = = = = request from client = = = = =")
+//        print(header)
+//        println("= = = = = end of request = = = = =")
 
         val responseHeader: String
         val mimeType: String
         when {
             file.exists() && file.isFile -> {
                 mimeType = FileHelper.getMimeType(file)
+                println("absolutePath ${file.absolutePath}")
+                println("mimeType: $mimeType")
                 responseHeader = responseHeaderBuilder(
                     code = 200,
                     status = "OK",
                     contentType = mimeType,
                     contentLength = file.length(),
                 )
-                val sdf = SimpleDateFormat("hh:mm dd/MM/yyyy")
-                val calendar = Calendar.getInstance().also {
-                    it.timeInMillis = file.lastModified()
-                }
-                val lastModified = sdf.format(calendar.time)
-
-
-                println("fileName ${file.name}")
-                println("size ${file.length()}")
-                println("lastModified $lastModified")
-
 
                 with(bw) {
                     write(responseHeader)
@@ -74,7 +73,9 @@ fun main() = runBlocking {
                 }
             }
             file.exists() && file.isDirectory -> {
-                val content = "<!doctype html><html><h1>listing directories WIP</h1></html>\n"
+                val fileDataList = FileHelper.getAllFileAndDir(file)
+                val content = HtmlHelper.generateListingHtml(file, fileDataList)
+
                 mimeType = "text/html; charset=UTF-8"
                 responseHeader = responseHeaderBuilder(
                     code = 200,
@@ -82,6 +83,7 @@ fun main() = runBlocking {
                     contentType = mimeType,
                     contentLength = content.length.toLong(),
                 )
+
                 with(bw) {
                     write(responseHeader)
                     flush()
@@ -110,10 +112,11 @@ fun main() = runBlocking {
                 }
             }
         }
+        client.close()
 
-        println("= = = = = header from server = = = = =")
-        print(responseHeader)
-        println("= = = = = end of header = = = = =")
+//        println("= = = = = header from server = = = = =")
+//        print(responseHeader)
+//        println("= = = = = end of header = = = = =")
     }
 
 }
@@ -170,7 +173,7 @@ fun responseHeaderBuilder(
 
     response += "Content-Type: $contentType\r\n"
     response += "Content-Length: $contentLength\r\n"
-    response += "Server: progjarx\r\n"
+    response += "Server: progjarx/v2.0\r\n"
     response += "\r\n"
 
     return response

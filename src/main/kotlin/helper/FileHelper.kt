@@ -1,5 +1,7 @@
 package helper
 
+import data.FileData
+import data.toFileData
 import java.io.File
 import java.lang.NullPointerException
 import java.nio.file.Files
@@ -34,6 +36,16 @@ object FileHelper {
     private fun resolveMimeTypeManual(file: File): String {
         val lastSegment = file.path.substringAfterLast("/")
         return "text/plain"
+    }
+
+    fun getAllFileAndDir(file: File): List<FileData> {
+        return if (file.isFile) {
+            listOf(file.toFileData())
+        } else {
+            file.listFiles()?.map {
+                it.toFileData()
+            }.orEmpty()
+        }
     }
 
 }
