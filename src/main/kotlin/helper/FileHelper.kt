@@ -34,7 +34,6 @@ object FileHelper {
     }
 
     private fun resolveMimeTypeManual(file: File): String {
-        val lastSegment = file.path.substringAfterLast("/")
         return "text/plain"
     }
 

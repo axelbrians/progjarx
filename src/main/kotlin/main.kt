@@ -35,7 +35,7 @@ fun main() = runBlocking {
 
         val url = firstRowResponses[1].removePrefix("/")
         val file = File(rootDir, "\\$url")
-        println(file.absolutePath)
+        println(url)
 
 //        println("= = = = = request from client = = = = =")
 //        print(header)
@@ -46,8 +46,8 @@ fun main() = runBlocking {
         when {
             file.exists() && file.isFile -> {
                 mimeType = FileHelper.getMimeType(file)
-                println("absolutePath ${file.absolutePath}")
-                println("mimeType: $mimeType")
+//                println("absolutePath ${file.absolutePath}")
+//                println("mimeType: $mimeType")
                 responseHeader = responseHeaderBuilder(
                     code = 200,
                     status = "OK",
@@ -74,15 +74,37 @@ fun main() = runBlocking {
             }
             file.exists() && file.isDirectory -> {
                 val fileDataList = FileHelper.getAllFileAndDir(file)
-                val content = HtmlHelper.generateListingHtml(file, fileDataList)
+                val content: String
 
                 mimeType = "text/html; charset=UTF-8"
-                responseHeader = responseHeaderBuilder(
-                    code = 200,
-                    status = "OK",
-                    contentType = mimeType,
-                    contentLength = content.length.toLong(),
-                )
+                val indexFileData = fileDataList.find {
+                    it.name == "index.html" ||
+                    it.name == "index.php"
+                }
+
+                responseHeader = if (indexFileData != null && !indexFileData.isDirectory) {
+                    val indexFile = File(indexFileData.absolutePath)
+                    var temp = ""
+                    indexFile.readLines().forEach {
+                        temp += "$it\n"
+                    }
+                    content = temp
+                    responseHeaderBuilder(
+                        code = 302,
+                        status = "OK",
+                        contentType = mimeType,
+                        contentLength = content.length.toLong(),
+                        location = "$url/${indexFileData.name}"
+                    )
+                } else {
+                    content = HtmlHelper.generateListingHtml(file, fileDataList)
+                    responseHeaderBuilder(
+                        code = 200,
+                        status = "OK",
+                        contentType = mimeType,
+                        contentLength = content.length.toLong(),
+                    )
+                }
 
                 with(bw) {
                     write(responseHeader)
@@ -94,11 +116,11 @@ fun main() = runBlocking {
                 }
             }
             else -> {
-                val content = "<!doctype html><html><p>hello mom!</p></html>\r\n"
+                val content = "<!doctype html><html><h1>hello mom!</h1><h3>404 Not found, too bad.</h3></html>\r\n"
                 mimeType = "text/html; charset=UTF-8"
                 responseHeader = responseHeaderBuilder(
-                    code = 200,
-                    status = "OK",
+                    code = 404,
+                    status = "Not found",
                     contentType = mimeType,
                     contentLength = content.length.toLong(),
                 )
@@ -158,6 +180,7 @@ fun responseHeaderBuilder(
     status: String,
     contentType: String,
     contentLength: Long,
+    location: String = ""
 ): String {
     var response = ""
 
@@ -169,6 +192,11 @@ fun responseHeaderBuilder(
         "Content-Disposition: inline\r\n"
     } else {
         "Content-Disposition: attachment\r\n"
+    }
+    response += if (location.isNotBlank()) {
+        "Location: /$location\r\n"
+    } else {
+        ""
     }
 
     response += "Content-Type: $contentType\r\n"

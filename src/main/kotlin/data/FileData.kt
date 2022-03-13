@@ -8,7 +8,8 @@ data class FileData(
     val name: String,
     val isDirectory: Boolean,
     val lastModified: String,
-    val size: String
+    val size: String,
+    val absolutePath: String
 ) {
     companion object {
         val SDF: SimpleDateFormat = SimpleDateFormat("hh:mm dd/MM/yyyy")
@@ -38,6 +39,7 @@ fun File.toFileData(): FileData {
         name = fileName,
         isDirectory = this.isDirectory,
         lastModified = lastModified,
-        size = size
+        size = size,
+        absolutePath = absolutePath
     )
 }
