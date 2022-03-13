@@ -1,16 +1,13 @@
 import helper.FileHelper
 import helper.HtmlHelper
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.*
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.text.SimpleDateFormat
-import java.util.*
 
 var staticRootDir: String = System.getProperty("user.dir")
 var rootDir: String = staticRootDir
-var host:String? = ""
+var host: String? = ""
 val ttl = 100
 val timeout = 15
 var keepAlive = false
@@ -32,6 +29,8 @@ fun main() = runBlocking {
     while (true) {
         println("= = = = = Waiting for next client to connect = = = = =")
         val client = server.accept()
+        println("= = = = = connected to ${client.inetAddress} = = = = =")
+
         keepAlive = false
 
         val br = BufferedReader(InputStreamReader(client.getInputStream()))
@@ -71,6 +70,7 @@ fun main() = runBlocking {
         val mimeType: String
         when {
             file.exists() && file.isFile -> {
+                println("accessing ${file.path}")
                 mimeType = FileHelper.getMimeType(file)
 //                println("absolutePath ${file.absolutePath}")
 //                println("mimeType: $mimeType")
@@ -99,6 +99,7 @@ fun main() = runBlocking {
                 }
             }
             file.exists() && file.isDirectory -> {
+                println("accessing ${file.path}")
                 val fileDataList = FileHelper.getAllFileAndDir(file)
                 val content: String
 
@@ -115,12 +116,17 @@ fun main() = runBlocking {
                         temp += "$it\n"
                     }
                     content = temp
+                    var location = "http://$host"
+                    if (url.isNotBlank()) {
+                        location += "/$url"
+                    }
+                    location += "/${indexFileData.name}"
                     responseHeaderBuilder(
                         code = 302,
                         status = "OK",
                         contentType = mimeType,
                         contentLength = content.length.toLong(),
-//                        location = "$url/${indexFileData.name}"
+                        location = location
                     )
                 } else {
                     content = HtmlHelper.generateListingHtml(file, fileDataList)
@@ -160,7 +166,7 @@ fun main() = runBlocking {
                 }
             }
         }
-        if(keepAlive) delay(3000)
+//        if(keepAlive) delay(3000)
         client.close()
 
 //        println("= = = = = header from server = = = = =")
@@ -178,7 +184,7 @@ fun getRequestHeader(br: BufferedReader): String {
 
     while (true) {
         val message: String? = br.readLine()
-        println(message)
+//        println(message)
         if(message != null && message.contains("Host")) {
             host = message.substringAfter(' ')
         }
@@ -227,7 +233,7 @@ fun responseHeaderBuilder(
         "Content-Disposition: attachment\r\n"
     }
     response += if (location.isNotBlank()) {
-        "Location: /$location\r\n"
+        "Location: $location\r\n"
     } else {
         ""
     }
