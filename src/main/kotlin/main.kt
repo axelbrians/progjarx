@@ -10,7 +10,7 @@ var staticRootDir: String = System.getProperty("user.dir")
 var rootDir: String = staticRootDir
 var host: String? = ""
 const val max = 100
-const val timeout = 17
+const val timeout = 5
 var keepAlive = false
 var isSent = false
 
@@ -68,64 +68,69 @@ fun main() = runBlocking {
 //        println("= = = = = request from client = = = = =")
 //        print(header)
 //        println("= = = = = end of request = = = = =")
-        try {
-            if(keepAlive) {
-                response(file, bw, bos, url)
-                println("KeepAlive")
 
-                    while(true) {
-                        if(isSent) {
-                            keepAlive = false
-//                            println("\nSending Responsss\n")
-                            br = BufferedReader(InputStreamReader(client.getInputStream()))
-                            bw = BufferedWriter(OutputStreamWriter(client.getOutputStream()))
-                            bos = BufferedOutputStream(client.getOutputStream())
-                            header = getRequestHeader(br)
-                            rootDir = staticRootDir
-                            var path: String
-                            for (i in 1 until config.size) {
-                                if(config[i].substringBefore(':') == host) {
-                                    path = config[i].substringAfter(":./")
-                                    rootDir += "\\$path"
-                                    break
-                                }
-                            }
-                            if(header == "null") {
-    //                            println("x")
-                                break
-                            }
-                            firstRowResponses = header.substringBefore("\n", "").split(" ")
-    //                        println("Frist RWO RSPONS : " + firstRowResponses)
-                            if(firstRowResponses.size < 3) {
-                                break
-                            }
-                            else {
-                                url = firstRowResponses[1].removePrefix("/")
-                            }
-                            file = File(rootDir, "\\$url")
-                            println("url: $url")
-                            isSent = false
-                            response(file, bw, bos, url)
-//                            println("end of responsss")
-                        }
-                    }
-            } else {
-                response(file, bw, bos, url)
-            }
-        }
-        catch (e: SocketTimeoutException) {}
-        catch (e: Exception) {
-            System.err.println("Server error: " + e.message)
-        } finally {
-            // Close the connection
+        if(keepAlive) {
+            response(file, bw, bos, url)
+            println("KeepAlive")
+
             try {
-                client.close()
-            } catch (e: IOException) {
-                e.printStackTrace()
+                while(true) {
+//                        if(isSent) {
+//                            keepAlive = false
+//                            println("\nSending Responsss\n")
+                        br = BufferedReader(InputStreamReader(client.getInputStream()))
+                        bw = BufferedWriter(OutputStreamWriter(client.getOutputStream()))
+                        bos = BufferedOutputStream(client.getOutputStream())
+                        header = getRequestHeader(br)
+                        rootDir = staticRootDir
+                        var path: String
+                        for (i in 1 until config.size) {
+                            if(config[i].substringBefore(':') == host) {
+                                path = config[i].substringAfter(":./")
+                                rootDir += "\\$path"
+                                break
+                            }
+                        }
+                        if(header == "null") {
+//                            println("x")
+                            continue
+                        }
+                        firstRowResponses = header.substringBefore("\n", "").split(" ")
+//                        println("Frist RWO RSPONS : " + firstRowResponses)
+                        if(firstRowResponses.size < 3) {
+                            continue
+                        }
+                        else {
+                            url = firstRowResponses[1].removePrefix("/")
+                        }
+                        file = File(rootDir, "\\$url")
+                        println("url: $url")
+//                            isSent = false
+                        response(file, bw, bos, url)
+//                            println("end of responsss")
+//                        }
+                }
             }
-            System.out.format("[%s] Closing client access\n", Date())
+            catch (e: SocketTimeoutException) {
+                println("hello mom! timeout!")
+            }
+            catch (e: Exception) {
+                println("Server error: " + e.message)
+            }
+
+        } else {
+            response(file, bw, bos, url)
         }
 
+        // Close the connection
+        try {
+            client.keepAlive = false
+            client.tcpNoDelay = false
+            client.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        System.out.format("[%s] Closing client access\n", Date())
 
 
 //        println("= = = = = header from server = = = = =")
