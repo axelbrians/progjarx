@@ -23,16 +23,16 @@ fun File.toFileData(): FileData {
     val fileName = name
     val lastModified = FileData.SDF.format(calendar.time)
     var size = "${length()} B"
-    if (length() / 1000 > 1) {
+    if (length() / 1_000 > 1) {
         size = "${length().toDouble() / 1000} KB"
     }
 
-    if (length() / (1000 * 1000) > 1) {
-        size = "${length().toDouble() / (1000 * 1000)} MB"
+    if (length() / (1_000_000) > 1) {
+        size = "${length().toDouble() / (1_000_000)} MB"
     }
 
-    if (length() / (1000 * 1000 * 1000) > 1) {
-        size = "${length().toDouble() / (1000 * 1000 * 1000)} GB"
+    if (length() / (1000_000_000) > 1) {
+        size = "${length().toDouble() / (1000_000_000)} GB"
     }
 
     return FileData(

@@ -43,7 +43,7 @@ object HtmlHelper {
         val bodyTitle = H1_TAG.format(workingDir)
         var bodyTableContent = ""
 
-        headTitle += "<link rel=\"icon\" href=\"http://progjarx.com/assets/progjarx-logo.ico\">"
+        headTitle += "<link rel=\"icon\" href=\"http://progjarx.com/assets/progjarx.ico\">"
 
         bodyTableContent += createTrTitle()
         bodyTableContent += createTrBorder()
@@ -110,7 +110,7 @@ object HtmlHelper {
 
         trContent += TH_TAG.format(
             "valign=\"top\"",
-            IMG_TAG.format("height=\"24px\" src=\"http://progjarx.com/assets/progjarx-logo.ico\" alt=\"[ICO]\"")
+            IMG_TAG.format("height=\"24px\" src=\"http://progjarx.com/assets/progjarx.ico\" alt=\"[ICO]\"")
         )
 
         trContent += TH_TAG.format(
