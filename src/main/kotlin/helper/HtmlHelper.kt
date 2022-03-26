@@ -1,6 +1,5 @@
 package helper
 
-import rootDir
 import data.FileData
 import java.io.File
 
@@ -37,12 +36,19 @@ object HtmlHelper {
     private const val IMG_TAG =
         "<img %s/>"
 
-    fun generateListingHtml(parent: File, fileDataList: List<FileData>): String {
-        val workingDir = getWorkingDirectory(parent)
+    fun generateListingHtml(
+        parent: File,
+        fileDataList: List<FileData>,
+        rootDir: String
+    ): String {
+        println("rootDir $rootDir")
+        val workingDir = getWorkingDirectory(parent, rootDir)
         var headTitle = HEAD_TITLE.format(workingDir)
         val bodyTitle = H1_TAG.format(workingDir)
         var bodyTableContent = ""
 
+//        println("workingDir $workingDir")
+//        println("fileName ${fileDataList.first().absolutePath}")
         headTitle += "<link rel=\"icon\" href=\"http://progjarx.com/assets/progjarx.ico\">"
 
         bodyTableContent += createTrTitle()
@@ -136,7 +142,7 @@ object HtmlHelper {
         return TR_TAG.format(trContent)
     }
 
-    private fun getWorkingDirectory(file: File): String {
-        return file.path.removePrefix(rootDir).removePrefix("\\")
+    private fun getWorkingDirectory(file: File, rootDir: String): String {
+        return file.path.substringAfterLast("\\")
     }
 }
