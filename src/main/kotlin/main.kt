@@ -69,26 +69,26 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
     val bw = BufferedWriter(OutputStreamWriter(client.getOutputStream()))
     val bos = BufferedOutputStream(client.getOutputStream())
 
-    val header = getRequestHeader(br)
+    var requestHeader = RequestHeaderParser.parseHeader(br)
 
     val path: String
     for (i in 1 until config.size) {
 //            println("config row: " + config[i] + " host = " + config[i].substringBefore(':') + "HOST = " + host)
-        if(config[i].substringBefore(':') == host) {
+        if(config[i].substringBefore(':') == requestHeader.host) {
             path = config[i].substringAfter(":./")
             rootDir += "\\$path"
+            println("RootDir: $rootDir")
             break
         }
     }
 
-    val firstRowResponses = header.substringBefore("\n", "").split(" ")
-    println(firstRowResponses)
-    if (firstRowResponses.size < 3) {
+
+    if (requestHeader.firstRowResponses.size < 3) {
         client.close()
         return
     }
 
-    val url = firstRowResponses[1].removePrefix("/")
+    val url = requestHeader.firstRowResponses[1].removePrefix("/")
     val file = File(rootDir, "\\$url")
     println("relativeUrl $url")
 
@@ -104,6 +104,7 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
             mimeType = FileHelper.getMimeType(file)
 //                println("absolutePath ${file.absolutePath}")
 //                println("mimeType: $mimeType")
+
             responseHeader = responseHeaderBuilder(
                 code = 200,
                 status = "OK",
@@ -209,27 +210,6 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
 //        println("= = = = = header from server = = = = =")
 //        print(responseHeader)
 //        println("= = = = = end of header = = = = =")
-}
-
-fun getRequestHeader(br: BufferedReader): String {
-    var header = ""
-
-    while (true) {
-        val message: String? = br.readLine()
-//        println(message)
-        if(message != null && message.contains("Host")) {
-            host = message.substringAfter(' ')
-        }
-        if(message != null && message.contains("keep-alive")) {
-            keepAlive = true
-        }
-        if (message == null || message == "\r\n" || message.isBlank()) {
-            break
-        }
-        header += "$message\n"
-    }
-
-    return header
 }
 
 fun responseHeaderBuilder(
