@@ -6,7 +6,9 @@ data class RequestHeaderData(
     val firstRowResponses: List<String>,
     val host: String = "",
     val keepAlive: Boolean = false,
-    val range: String = ""
+    val range: String = "",
+    val rangeStart: Long,
+    val rangeEnd: Long
 ) {
     companion object {
         fun parseHeader(
@@ -16,6 +18,8 @@ data class RequestHeaderData(
             var host = ""
             var keepAlive = false
             var range = ""
+            var rangeStart: Long = -1
+            var rangeEnd: Long = -1
             try {
                 while (true) {
                     val message: String? = br.readLine()
@@ -26,7 +30,10 @@ data class RequestHeaderData(
                         keepAlive = true
                     }
                     if(message != null && message.contains("Range: ")) {
-                        range = message
+                        range = message.substringAfter(": ")
+                        var valRange  = range.substringAfter("bytes=")
+                        rangeStart = valRange.substringBefore('-',"-1").toLong()
+                        rangeEnd = valRange.substringAfter('-',"-1").toLong()
                     }
                     if (message == null || message == "\r\n" || message.isBlank()) {
                         break
@@ -37,11 +44,15 @@ data class RequestHeaderData(
                 println(e)
             }
             val firstRowResponse = header.substringBefore("\n", "").split(" ")
+            println("Range Start: $rangeStart")
+            println("Range End: $rangeEnd")
             return RequestHeaderData(
                 firstRowResponses = firstRowResponse,
                 host = host,
                 keepAlive = keepAlive,
-                range = range
+                range = range,
+                rangeStart = rangeStart,
+                rangeEnd = rangeEnd
             )
         }
     }
