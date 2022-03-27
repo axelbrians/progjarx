@@ -1,3 +1,4 @@
+import data.ResponseHeaderData
 import helper.FileHelper
 import helper.HtmlHelper
 import kotlinx.coroutines.*
@@ -90,13 +91,13 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
 
     val url = firstRowResponses[1].removePrefix("/")
     val file = File(rootDir, "\\$url")
-    println("relativeUrl $url")
+//    println("relativeUrl $url")
 
 //        println("= = = = = request from client = = = = =")
 //        print(header)
 //        println("= = = = = end of request = = = = =")
 
-    val responseHeader: String
+    val responseHeader: ResponseHeaderData
     val mimeType: String
     when {
         file.exists() && file.isFile -> {
@@ -104,15 +105,15 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
             mimeType = FileHelper.getMimeType(file)
 //                println("absolutePath ${file.absolutePath}")
 //                println("mimeType: $mimeType")
-            responseHeader = responseHeaderBuilder(
-                code = 200,
-                status = "OK",
+            responseHeader = ResponseHeaderData(
+                statusCode = 200,
+                statusMessage = "OK",
                 contentType = mimeType,
                 contentLength = file.length(),
             )
 
             with(bw) {
-                write(responseHeader)
+                write(responseHeader.toString())
                 flush()
             }
             file.inputStream().use {
@@ -151,25 +152,25 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
                     location += "/$url"
                 }
                 location += "/${indexFileData.name}"
-                responseHeaderBuilder(
-                    code = 302,
-                    status = "OK",
+                ResponseHeaderData(
+                    statusCode = 302,
+                    statusMessage = "OK",
                     contentType = mimeType,
                     contentLength = content.length.toLong(),
                     location = location
                 )
             } else {
                 content = HtmlHelper.generateListingHtml(file, fileDataList, rootDir)
-                responseHeaderBuilder(
-                    code = 200,
-                    status = "OK",
+                ResponseHeaderData(
+                    statusCode = 200,
+                    statusMessage = "OK",
                     contentType = mimeType,
                     contentLength = content.length.toLong(),
                 )
             }
 
             with(bw) {
-                write(responseHeader)
+                write(responseHeader.toString())
                 flush()
             }
             with(bos) {
@@ -180,14 +181,14 @@ fun handleClient(config: List<String>, client: Socket, jobIndex: Int) {
         else -> {
             val content = "<!doctype html><html><h1>hello mom!</h1><h3>404 Not found, too bad.</h3></html>\r\n"
             mimeType = "text/html; charset=UTF-8"
-            responseHeader = responseHeaderBuilder(
-                code = 404,
-                status = "Not found",
+            responseHeader = ResponseHeaderData(
+                statusCode = 404,
+                statusMessage = "Not found",
                 contentType = mimeType,
                 contentLength = content.length.toLong(),
             )
             with(bw) {
-                write(responseHeader)
+                write(responseHeader.toString())
                 flush()
             }
             with(bos) {
@@ -274,7 +275,7 @@ fun responseHeaderBuilder(
     response += "Content-Length: $contentLength\r\n"
     if(keepAlive) {
         response += "Keep-Alive: timeout=$timeout, max=$ttl\r\n"
-        response +="Connection: Keep-Alive\r\n"
+        response += "Connection: Keep-Alive\r\n"
     }
     response += "Server: progjarx/v2.0\r\n"
     response += "\r\n"
