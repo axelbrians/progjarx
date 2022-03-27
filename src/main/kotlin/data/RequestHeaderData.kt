@@ -8,7 +8,7 @@ data class RequestHeaderData(
     val keepAlive: Boolean = false,
     val range: String = "",
     val rangeStart: Long,
-    val rangeEnd: Long
+    var rangeEnd: Long
 ) {
     companion object {
         fun parseHeader(
@@ -31,21 +31,27 @@ data class RequestHeaderData(
                     }
                     if(message != null && message.contains("Range: ")) {
                         range = message.substringAfter(": ")
-                        var valRange  = range.substringAfter("bytes=")
-                        rangeStart = valRange.substringBefore('-',"-1").toLong()
-                        rangeEnd = valRange.substringAfter('-',"-1").toLong()
+                        range = range.replaceFirst('=', ' ')
+//                        println(range)
+                        val bytesRegex = "^(bytes .*)".toRegex()
+                        if(bytesRegex.find(range, 0) != null) {
+                            var valRange  = range.substringAfter("bytes ")
+                            rangeStart = valRange.substringBefore('-',"-1").toLong()
+                            rangeEnd = valRange.substringAfter('-',"-1").toLong()
+                        }
                     }
                     if (message == null || message == "\r\n" || message.isBlank()) {
                         break
                     }
                     header += "$message\n"
                 }
+
             } catch (e: Exception) {
                 println(e)
             }
             val firstRowResponse = header.substringBefore("\n", "").split(" ")
-            println("Range Start: $rangeStart")
-            println("Range End: $rangeEnd")
+//            println("Range Start: $rangeStart")
+//            println("Range End: $rangeEnd")
             return RequestHeaderData(
                 firstRowResponses = firstRowResponse,
                 host = host,

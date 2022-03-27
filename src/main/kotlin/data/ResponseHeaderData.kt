@@ -53,6 +53,10 @@ data class ResponseHeaderData(
 
         response += "Content-Type: $contentType\r\n"
         response += "Content-Length: $contentLength\r\n"
+        if(contentRange != null) {
+            response += "Accept-Ranges: bytes\r\n"
+            response += "Content-Range: $contentRange/$contentLength\r\n"
+        }
         if(connection != null) {
             response += "Connection: $connection\r\n"
             response += "Keep-Alive: timeout=5, max=100\r\n"
@@ -62,6 +66,8 @@ data class ResponseHeaderData(
         response += "Server: progjarx/v2.0\r\n"
         response += "\r\n"
 
+        println("= = = = = = = = Respons lh = = = = = = = = = =")
+        println(response)
         return response
     }
 }

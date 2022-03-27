@@ -2,10 +2,7 @@ import data.RequestHeaderData
 import data.ResponseHeaderData
 import helper.FileHelper
 import helper.HtmlHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.*
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -42,11 +39,11 @@ class ProgjarXServer(
             }
             val job = coroutineScope.launch {
 //            println("= = = = = client $jobIndex connected to ${client.inetAddress} = = = = =")
-                try {
+//                try {
                     handleClient(config, client, jobIndex)
-                } catch (exception: Exception) {
-                    println("Internal server error ${exception.message}")
-                }
+//                } catch (exception: Exception) {
+//                    println("Internal server error ${exception.message}")
+//                }
             }
 
             jobs[jobIndex] = job
@@ -95,29 +92,74 @@ class ProgjarXServer(
                 mimeType = FileHelper.getMimeType(file)
 //                println("absolutePath ${file.absolutePath}")
 //                println("mimeType: $mimeType")
+                responseHeader = if(requestHeader.range.isBlank()) {
+                     ResponseHeaderData(
+                        statusCode = 200,
+                        statusMessage = "OK",
+                        contentType = mimeType,
+                        contentLength = file.length(),
+                    )
+                } else {
+                    ResponseHeaderData(
+                        statusCode = 206,
+                        statusMessage = "Partial Content",
+                        contentType = mimeType,
+                        contentLength = file.length(),
+                        contentRange = requestHeader.range
+                    )
+                }
 
-                responseHeader = ResponseHeaderData(
-                    statusCode = 200,
-                    statusMessage = "OK",
-                    contentType = mimeType,
-                    contentLength = file.length(),
-                )
 
                 with(bw) {
-                    write(responseHeader.toString())
-                    flush()
+                    try{
+                        write(responseHeader.toString())
+                        flush()
+                    }
+                    catch (e: Exception) {
+                        println(e)
+                    }
+
                 }
                 file.inputStream().use {
-                    val byteArray = ByteArray(1024 * 8)
-                    var read = it.read(byteArray)
-                    while (true) {
-                        bos.write(byteArray, 0, read)
-                        read = it.read(byteArray)
-                        if (read < 0) {
-                            break
+                    try {
+                        val byteArray = ByteArray(1024 * 8)
+                        var read: Int = 0
+                        if(requestHeader.range.isBlank()) {
+                            read = it.read(byteArray)
+                            while (true) {
+                                bos.write(byteArray, 0, read)
+                                read = it.read(byteArray)
+                                if (read < 0) {
+                                    break
+                                }
+                            }
                         }
+                        else {
+                            it.skip(requestHeader.rangeStart)
+                            if(requestHeader.rangeEnd == "-1".toLong()) {
+                                requestHeader.rangeEnd = file.length()
+                            }
+                            var rangeSize = requestHeader.rangeEnd - requestHeader.rangeStart
+//                            println("RangeEnd = ${requestHeader.rangeEnd}\nRange Size = $rangeSize")
+                            read = it.read(byteArray)
+                            rangeSize -= read
+                            while (true) {
+                                bos.write(byteArray, 0, read)
+                                read = it.read(byteArray)
+                                rangeSize -= read
+                                if(rangeSize < 0) {
+                                    break
+                                }
+                                if (read < 0) {
+                                    break
+                                }
+                            }
+                        }
+                        bos.flush()
                     }
-                    bos.flush()
+                    catch (e: Exception) {
+                        println(e)
+                    }
                 }
             }
             file.exists() && file.isDirectory -> {
