@@ -76,7 +76,9 @@ class ProgjarXServer(
             return
         }
 
-        val url = requestHeader.firstRowResponses[1].removePrefix("/")
+        val url = requestHeader.firstRowResponses[1]
+            .removePrefix("/")
+            .replace("%20", " ")
         val file = File(rootDir, "\\$url")
         println("relativeUrl $url")
 
@@ -123,7 +125,7 @@ class ProgjarXServer(
                 file.inputStream().use {
                     try {
                         val byteArray = ByteArray(1024 * 8)
-                        var read: Int = 0
+                        var read: Int
                         if(requestHeader.range.isBlank()) {
                             read = it.read(byteArray)
                             while (true) {
